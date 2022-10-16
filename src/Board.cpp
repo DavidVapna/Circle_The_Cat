@@ -1,16 +1,18 @@
+//=============================================================================
 #include "Board.h"
-//-----------------------------------------------------------------------------
-//
+//=============================================================================
+//Board C-Tor, initializing the game board by loading the tile objects according
+//to the defined game board size.
 Board::Board()
 {
     for (unsigned row = 0; row < TILES_IN_COL; row++)
     {
         std::vector<Tile> tempRow;
-        V2F tilePos(BOARD_START.x + ((row % 2) * TILE_SIZE.x / 2), (float)(row * TILE_SIZE.y) + BOARD_START.y);
+        sf::Vector2f tilePos(BOARD_START.x + ((row % 2) * TILE_SIZE.x / 2), (float)(row * TILE_SIZE.y) + BOARD_START.y);
         for (unsigned col = 0; col < TILES_IN_ROW; col++)
         {
             bool lossingTile = (col == 0 || row == 0 || col == TILES_IN_ROW - 1 || row == TILES_IN_COL - 1);
-            tempRow.emplace_back(Tile(Positions(V2U{ row,col }, tilePos), lossingTile));
+            tempRow.emplace_back(Tile(Positions(sf::Vector2u{ row,col }, tilePos), lossingTile));
             tilePos.x += TILE_SIZE.x;
         }
         m_board.push_back(tempRow);
@@ -18,39 +20,37 @@ Board::Board()
     setAdjacents();
     m_board[CAT_START.x][CAT_START.y].catHere();
 }
-//-----------------------------------------------------------------------------
-//
+//=============================================================================
+//this function helps us keep track on the adjacent tiles of each tile, that 
+//way we the cat can use the this information to use as a tree and use BFS on it.
 void Board::setAdjacents()
 {
     for (int row = 0; row < TILES_IN_ROW; row++)
         for (int col = 0; col < TILES_IN_COL; col++)
         {
-            std::list<V2U> currAdj;
-            if (row % 2 == 0)
+            std::list<sf::Vector2u> currAdj;
+            if (row % 2 == 0 && col > 0 && row > 0)
             {
-                if (col > 0 && row > 0)
-                {
-                    currAdj.push_back(V2U(row - 1, col - 1));
-                    if (row < TILES_IN_ROW - 1) currAdj.push_back(V2U(row + 1, col - 1));
-                }
+                currAdj.push_back(sf::Vector2u(row - 1, col - 1));
+                if (row < TILES_IN_ROW - 1)
+                    currAdj.push_back(sf::Vector2u(row + 1, col - 1));
             }
-            else
+            else if (col < TILES_IN_COL - 1 && row < TILES_IN_ROW - 1)
             {
-                if (col < TILES_IN_COL - 1 && row < TILES_IN_ROW - 1)
-                {
-                    currAdj.push_back(V2U(row + 1, col + 1));
-                    if (row > 0) currAdj.push_back(V2U(row - 1, col + 1));
-                }
+                currAdj.push_back(sf::Vector2u(row + 1, col + 1));
+                if (row > 0) currAdj.push_back(sf::Vector2u(row - 1, col + 1));
             }
-            if (col > 0) currAdj.push_back(V2U(row, col - 1));
-            if (row > 0) currAdj.push_back(V2U(row - 1, col));
-            if (col < TILES_IN_COL - 1) currAdj.push_back(V2U(row, col + 1));
-            if (row < TILES_IN_ROW - 1) currAdj.push_back(V2U(row + 1, col));
+
+            if (col > 0) currAdj.push_back(sf::Vector2u(row, col - 1));
+            if (row > 0) currAdj.push_back(sf::Vector2u(row - 1, col));
+            if (col < TILES_IN_COL - 1) currAdj.push_back(sf::Vector2u(row, col + 1));
+            if (row < TILES_IN_ROW - 1) currAdj.push_back(sf::Vector2u(row + 1, col));
 
             m_board[row][col].addAdjacents(currAdj);
         }
+
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Board::clearBoard()
 {
@@ -61,35 +61,34 @@ void Board::clearBoard()
             tile.setPassable();
         }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-void Board::randomLava(const V2U& difficulty)
+void Board::randomLava(const sf::Vector2u& difficulty)
 {
     auto numOfLava = Resources::instance().randomNumber(difficulty);
     srand((unsigned int)time(NULL));
-    int counter = 0;
 
-    while (counter < numOfLava)
+    for (int counter = 0; counter < numOfLava; counter++)
     {
-        V2U tile(rand() % TILES_IN_COL, rand() % TILES_IN_ROW);
-        if (!m_board[tile.x][tile.y].isCatHere() && m_board[tile.x][tile.y].setNotPassable())
-            counter++;
+
+        sf::Vector2u tile(rand() % TILES_IN_COL, rand() % TILES_IN_ROW);
+        if (!m_board[tile.x][tile.y].isCatHere() && m_board[tile.x][tile.y].setLava());
     }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-bool Board::mouseClicked(const V2F& mousePos)
+bool Board::mouseClicked(const sf::Vector2f& mousePos)
 {
     for (int i = 0; i < m_board.size(); i++)
         for (int j = 0; j < m_board[i].size(); j++)
-            if (m_board[i][j].handleClick(mousePos, m_lastTile))
+            if (m_board[i][j].setLava(mousePos))
             {
-                m_lastTile = sf::Vector2i(i, j);
+                m_clickRoute.push_front(sf::Vector2i(i, j));
                 return true;
             }
     return false;
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Board::draw(sf::RenderWindow& window) const
 {
@@ -97,25 +96,27 @@ void Board::draw(sf::RenderWindow& window) const
         for (auto& tile : row)
             tile.draw(window);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 bool Board::undo()
 {
-    if (m_lastTile.x > TILES_IN_ROW || m_lastTile.y > TILES_IN_COL ||
-        m_lastTile.x < 0|| m_lastTile.y < 0 ) return false;
-    
-    m_lastTile = m_board[m_lastTile.x][m_lastTile.y].undo();
-    return true;
+    if (m_clickRoute.empty())
+        return false;
+    else {
+        m_board[m_clickRoute.front().x][m_clickRoute.front().y].setPassable();
+        m_clickRoute.pop_front();
+    }
+        return true;
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-bool Board::findExit(const V2U& theCat)
+bool Board::findExit(const sf::Vector2u& theCat)
 {
     m_board[theCat.x][theCat.y].setVisit();
-    std::vector<std::pair<V2U, V2U>> queue;
-    queue.push_back(std::make_pair(theCat, V2U{}));
+    std::vector<std::pair<sf::Vector2u, sf::Vector2u>> queue;
+    queue.push_back(std::make_pair(theCat, sf::Vector2u{}));
     bool found = false;
-    std::list<V2U> escapeRoute;
+    std::list<sf::Vector2u> escapeRoute;
 
     searchRoute(queue, found);
     if (found)
@@ -125,9 +126,9 @@ bool Board::findExit(const V2U& theCat)
     
     return found;
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-void Board::searchRoute(std::vector<std::pair<V2U, V2U>>& queue, bool &found)
+void Board::searchRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue, bool &found)
 {
     for (int i = 0; i < queue.size() && !found; ++i)
     {
@@ -146,7 +147,7 @@ void Board::searchRoute(std::vector<std::pair<V2U, V2U>>& queue, bool &found)
         for (auto& tile : row)
             tile.resetVisit();
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 bool Board::validateRoute() const
 {
@@ -160,9 +161,9 @@ bool Board::validateRoute() const
     }
     return true;
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-void Board::setEscapeRoute(std::vector<std::pair<V2U, V2U>>& queue, std::list<V2U>& route)
+void Board::setEscapeRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue, std::list<sf::Vector2u>& route)
 {
     route.push_back(queue.back().first);
     for (auto i = --queue.end(); i != queue.begin(); --i)
@@ -173,9 +174,9 @@ void Board::setEscapeRoute(std::vector<std::pair<V2U, V2U>>& queue, std::list<V2
     route.pop_back();
     m_escapeRoute = route;
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-void Board::senselessRoute(const V2U& theCat, bool &found)
+void Board::senselessRoute(const sf::Vector2u& theCat, bool &found)
 {
     for (auto adjecent : m_board[theCat.x][theCat.y].getAdjacents())
         if (m_board[adjecent.x][adjecent.y].isPassable())
@@ -185,13 +186,13 @@ void Board::senselessRoute(const V2U& theCat, bool &found)
             break;
         }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-Tile& Board::getTile(V2U wantedTile) 
+Tile& Board::getTile(sf::Vector2u wantedTile) 
 {
     return m_board[wantedTile.x][wantedTile.y];
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 Tile& Board::escapeTile()
 {
@@ -199,3 +200,4 @@ Tile& Board::escapeTile()
     m_escapeRoute.pop_back();
     return m_board[nextTile.x][nextTile.y];
 }
+//=============================================================================

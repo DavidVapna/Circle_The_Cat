@@ -1,13 +1,12 @@
+//=============================================================================
 #pragma once
-
-#include <SFML\Graphics.hpp>
+//=============================================================================
 #include "Macros.h"
-
-
+//=============================================================================
 class Animation
 {
 public:
-	Animation(const sf::Texture& image, const V2U& imageCount, const float& switchTime);
+	Animation(const sf::Texture& image, const sf::Vector2u& imageCount, const float& switchTime);
 	~Animation();
 	void update(float deltaTime, bool faceRight);
 
@@ -20,9 +19,10 @@ public:
 	sf::IntRect uvRect;
 
 private:
-	V2U m_imageCount;
-	V2U m_currImage;
+	sf::Vector2u m_imageCount;
+	sf::Vector2u m_currImage;
 
 	float m_totalTime;
 	float m_switchTime;
 };
+//=============================================================================

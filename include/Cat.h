@@ -1,21 +1,17 @@
+//=============================================================================
 #pragma once
-
-
-
+//=============================================================================
 #include <string>
 #include <list>
 #include <vector>
 #include <iostream>
 #include <cstdlib>
 #include <SFML/Graphics.hpp>
-#include "Macros.h"
-#include "Tile.h"
-#include "Animation.h"
 #include <list>
-
-
-
-
+//=============================================================================
+class Tile;
+class Animation;
+//=============================================================================
 class Cat
 {
 public:
@@ -25,7 +21,7 @@ public:
 	void update(float deltaTime);
 	void draw(sf::RenderWindow& window) const;
 	void drawJump(sf::RenderWindow& window) const;
-	V2U getPosition() const;
+	sf::Vector2u getPosition() const;
 	void undo();
 	void jump(float deltaTime);
 	bool didCatWin() const;
@@ -44,6 +40,7 @@ private:
 	sf::Sprite m_jump;
 
 	sf::Vector2f m_frame;
-	V2F m_pos;
+	sf::Vector2f m_pos;
 
 };
+//=============================================================================

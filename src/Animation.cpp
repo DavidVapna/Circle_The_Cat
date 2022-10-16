@@ -1,7 +1,8 @@
+//=============================================================================
 #include "Animation.h"
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-Animation::Animation(const sf::Texture& image, const V2U& imageCount, const float& switchTime)
+Animation::Animation(const sf::Texture& image, const sf::Vector2u& imageCount, const float& switchTime)
 {
 	m_imageCount = imageCount;
 	m_switchTime = switchTime;
@@ -12,12 +13,12 @@ Animation::Animation(const sf::Texture& image, const V2U& imageCount, const floa
 	uvRect.width = image.getSize().x / float(m_imageCount.x);
 	uvRect.height = image.getSize().y / float(m_imageCount.y);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 Animation::~Animation()
 {
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Animation::update(float deltaTime, bool faceRight)
 {

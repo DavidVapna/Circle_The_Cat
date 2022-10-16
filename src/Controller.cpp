@@ -1,15 +1,16 @@
+//=============================================================================
 #include "Controller.h"
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 Controller::Controller()
-    :m_window(sf::VideoMode(GAME_WIDTH, GAME_HEIGHT), "Trap The Cat", sf::Style::Default)
+    :m_window(sf::VideoMode(GAME_WIDTH, GAME_HEIGHT), "Circle The Cat", sf::Style::Default)
 {
     setSprites();
     setTexts();
     m_cat = new Cat(m_board.getTile(CAT_START));
     m_board.randomLava(DIFFICULTIES[(++m_difficulty)%3]);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::run()
 {
@@ -22,7 +23,7 @@ void Controller::run()
         m_window.display();
     }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::handleEvents()
 {
@@ -52,7 +53,7 @@ void Controller::handleEvents()
         }
     }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::catsTurn()
 {
@@ -67,7 +68,7 @@ void Controller::catsTurn()
         lostToCat();
     m_catTurn = false;
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::update()
 {
@@ -75,7 +76,7 @@ void Controller::update()
     m_cat->update(m_deltaTime);
     m_texts[(int)Texts::Counter].setString(CLICKS_TEXT + std::to_string(m_clicks));
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::draw() 
 {
@@ -88,7 +89,7 @@ void Controller::draw()
     m_board.draw(m_window);
     m_catTurn ? m_cat->drawJump(m_window) : m_cat->draw(m_window);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::keyBoardEvent(const sf::Event& evnt)
 {
@@ -101,14 +102,11 @@ void Controller::keyBoardEvent(const sf::Event& evnt)
         undo(); break;
 
     case sf::Keyboard::R:
-        
-        m_board.clearBoard();
-        m_cat->newLevel(m_board.getTile(CAT_START));
-        m_board.randomLava(DIFFICULTIES[(m_difficulty)]);
+        restartLevel();
         break;
     }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::mouseEvent(const sf::Event& evnt)
 {
@@ -123,18 +121,18 @@ void Controller::mouseEvent(const sf::Event& evnt)
             undo();
     }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::setSprites()
 {
-    sf::Sprite sprite(Resources::instance().getTexture(ResourceName::BackG));
-    V2F scaleTo;
+    sf::Sprite sprite(Resources::instance().getTexture((int)Textures::BackG));
+    sf::Vector2f scaleTo;
     scaleTo.x = (float)GAME_WIDTH / sprite.getTexture()->getSize().x;
     scaleTo.y = (float)GAME_HEIGHT / sprite.getTexture()->getSize().y;
     sprite.setScale(scaleTo);
     m_sprites.push_back(sprite);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::undo()
 {
@@ -145,7 +143,14 @@ void Controller::undo()
         m_clicks--;
     }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
+//
+void Controller::restartLevel()
+{
+    while (m_clicks > 0)
+        undo();
+}
+//=============================================================================
 //
 void Controller::lostToCat()
 {
@@ -179,14 +184,10 @@ void Controller::lostToCat()
         }
         m_window.display();
     }
-    while (m_board.undo())
-    {
-        m_cat->undo();
-        m_board.findExit(m_cat->getPosition());
-        m_clicks--;
-    }
+
+    restartLevel();
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::catJump()
 {
@@ -201,7 +202,7 @@ void Controller::catJump()
         m_window.display();
     }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::levelWin()
 {
@@ -228,7 +229,7 @@ void Controller::levelWin()
         m_window.display();
     }
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::loadNextLevel(int difficulty)
 {
@@ -236,7 +237,7 @@ void Controller::loadNextLevel(int difficulty)
     m_cat->newLevel(m_board.getTile(CAT_START));
     m_board.randomLava(DIFFICULTIES[difficulty]);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::setTexts()
 {
@@ -246,13 +247,13 @@ void Controller::setTexts()
     setText(35, LOSSING_TEXT, sf::Color::Cyan, LOSSING_POSITION);
     setText(35, WIN_TEXT, sf::Color::Yellow, WIN_POSITION);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Controller::setText(int size, const std::string& str,
-    const sf::Color& color, const V2F& pos)
+    const sf::Color& color, const sf::Vector2f& pos)
 {
     sf::Text text;
-    text.setFont(Resources::instance().getFont());
+    text.setFont(Resources::instance().getFont((int)Fonts::Classic));
     text.setCharacterSize(size);
     text.setString(str);
     text.setFillColor(color);

@@ -1,20 +1,21 @@
+//=============================================================================
 #include "Cat.h"
-//-----------------------------------------------------------------------------
+#include "Tile.h"
+#include "Animation.h"
+//=============================================================================
 //
 Cat::Cat(Tile& startingTile)
+    :m_faceRight(true)
 {
-    m_faceRight = true;
     m_jorney.push_back(&startingTile);
-    auto& idle = Resources::instance().getTexture(ResourceName::IdleCat);
-    auto& jump = Resources::instance().getTexture(ResourceName::JumpCat);
+    auto& idle = Resources::instance().getTexture((int)Textures::IdleCat);
+    auto& jump = Resources::instance().getTexture((int)Textures::JumpCat);
     m_idle.setTexture(idle);
     m_jump.setTexture(jump);
-
     m_animation.push_back(new Animation(idle, IDLE_COUNT, IDLE_SWITCH));
     m_animation.push_back(new Animation(jump, JUMP_COUNT, JUMP_SWITCH));
- 
 
-    V2F idleScale, jumpScale, deadScale;
+    sf::Vector2f idleScale, jumpScale, deadScale;
     idleScale.x = (TILE_SIZE.x / (idle.getSize().x / IDLE_COUNT.x) * 1.4);
     idleScale.y = (TILE_SIZE.y / (idle.getSize().y / IDLE_COUNT.y) * 1.4);
     m_idle.setScale(idleScale);                                        
@@ -23,46 +24,46 @@ Cat::Cat(Tile& startingTile)
     m_jump.setScale(jumpScale);
 
 
-    V2F idleOrg(m_idle.getGlobalBounds().height / 2, m_idle.getGlobalBounds().width / 2);
+    sf::Vector2f idleOrg(m_idle.getGlobalBounds().height / 2, m_idle.getGlobalBounds().width / 2);
     m_idle.setOrigin(idleOrg);
-    V2F jumpOrg(m_jump.getGlobalBounds().height / 2, m_jump.getGlobalBounds().width / 2);
+    sf::Vector2f jumpOrg(m_jump.getGlobalBounds().height / 2, m_jump.getGlobalBounds().width / 2);
     m_jump.setOrigin(idleOrg);
   
     m_pos = startingTile.getPos().second + LOOKING_RIGHT;
 
     m_idle.setPosition(m_pos);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 Cat::~Cat()
 {
     for (auto& pointer : m_animation)
         delete pointer;
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 void Cat::update(float deltaTime)
 {
     m_animation[(int)State::idle]->update(deltaTime, m_faceRight);
     m_idle.setTextureRect(m_animation[(int)State::idle]->uvRect);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Cat::draw(sf::RenderWindow& window) const
 {
     window.draw(m_idle);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Cat::drawJump(sf::RenderWindow& window) const
 {
     window.draw(m_jump);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
-V2U Cat::getPosition() const
+sf::Vector2u Cat::getPosition() const
 {
     return m_jorney.back()->getPos().first;
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Cat::tryToRun(Tile& destination)
 {
@@ -79,11 +80,11 @@ void Cat::tryToRun(Tile& destination)
     m_jump.setPosition(currPos);
     m_idle.setPosition(m_pos);
     
-    m_frame = V2F((m_pos - currPos).x / JUMP_FRAMES, (m_pos - currPos).y / JUMP_FRAMES);
+    m_frame = sf::Vector2f((m_pos - currPos).x / JUMP_FRAMES, (m_pos - currPos).y / JUMP_FRAMES);
 
     m_jorney.back()->catHere();
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Cat::jump(float deltaTime)
 {
@@ -91,13 +92,13 @@ void Cat::jump(float deltaTime)
     m_jump.setTextureRect(m_animation[(int)State::Jump]->uvRect);
     m_jump.move(m_frame);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 bool Cat::didCatWin() const
 {
     return m_jorney.back()->isLossing();
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 //
 void Cat::undo()
 {
@@ -112,7 +113,7 @@ void Cat::undo()
         m_pos = m_jorney.back()->getPos().second + LOOKING_LEFT;
     m_idle.setPosition(m_pos);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================
 void Cat::newLevel(Tile& startingTile)
 {
     m_faceRight = true;
@@ -122,4 +123,4 @@ void Cat::newLevel(Tile& startingTile)
     m_pos = startingTile.getPos().second + LOOKING_RIGHT;
     m_idle.setPosition(m_pos);
 }
-//-----------------------------------------------------------------------------
+//=============================================================================

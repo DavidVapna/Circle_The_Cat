@@ -1,26 +1,21 @@
+//=============================================================================
 #pragma once
-//-----------------------------------------------------------------------------
-#include <SFML/Graphics.hpp>
-#include <iostream>
-#include <cstdlib>
-#include <vector>
+//=============================================================================
 #include "Resources.h"
-#include "Macros.h"
-//-----------------------------------------------------------------------------
+//=============================================================================
 class Tile
 {
 public:
 	Tile(const Positions& position, bool lossingTile);
-	bool setNotPassable();
-	bool handleClick(const V2F& mouseClick, const sf::Vector2i& last);
+	//bool setNotPassable();
+	bool setLava(const sf::Vector2f& mouseClick = sf::Vector2f(0,0));
 	void draw(sf::RenderWindow& window) const;
 
-	const sf::Vector2i& undo();
 	void setVisit();
 	bool visited();
 	void resetVisit();
-	void addAdjacents(const std::list<V2U>& adjacents);
-	std::list<V2U> getAdjacents();
+	void addAdjacents(const std::list<sf::Vector2u>& adjacents);
+	std::list<sf::Vector2u> getAdjacents();
 	bool isPassable() const;
 	bool isLossing() const;
 	Positions getPos() const;
@@ -29,18 +24,21 @@ public:
 	bool isCatHere() const;
 	~Tile() = default;
 	void setPassable();
-private:
-	void addTile(ResourceName tile, const V2F& position);
-
-
 
 private:
-	bool m_passable = true;
+	//private functions
+	void addState(int tile, const sf::Vector2f& position);
+
+
+
+private:
+	//private members
+	bool m_passable;
 	bool m_lossingTile;
-	bool m_visited = false;
-	std::vector<sf::Sprite> m_states;
+	bool m_visited;
+	bool m_catIsHere;
 	Positions m_position;
-	sf::Vector2i m_lastTile = { -1,-1};
-	std::list<V2U> m_adjacents;
-	bool m_catIsHere = false;
+	std::vector<sf::Sprite> m_states;
+	std::list<sf::Vector2u> m_adjacents;
 };
+//=============================================================================
