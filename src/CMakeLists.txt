@@ -4,5 +4,6 @@
                                               "Board.cpp"
                                               "Resources.cpp"
                                               "Cat.cpp"
+                                              "Button.cpp"
                                               "Animation.cpp")
                                               
