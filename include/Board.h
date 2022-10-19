@@ -14,10 +14,14 @@ public:
 	bool mouseClicked(const sf::Vector2f& mousePos);
 	bool undo();
 	void setAdjacents();
-	bool validateRoute() const;
+	bool validateRoute();
 	Tile& escapeTile();
 	Tile& getTile(sf::Vector2u wantedTile);
 	void clearBoard();
+	void catJump(sf::RenderWindow& window);
+
+	void nextLevel(int difficulty);
+
 
 private:
 	void searchRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue, bool& found);

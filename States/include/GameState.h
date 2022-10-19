@@ -14,12 +14,10 @@ public:
 	virtual void setButtons() override;
 
 
-	void loadNextLevel(int difficulty);
 	void lostToCat();
 	void levelWin();
-	void catJump();
+
 	void catsTurn();
-	void undo();
 
 private:
 	void handleEvents();

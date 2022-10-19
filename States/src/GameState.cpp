@@ -1,7 +1,4 @@
 //=============================================================================
-//debug
-#include <format>
-//=============================================================================
 #include "GameState.h"
 #include "Resources.h"
 //=============================================================================
@@ -9,7 +6,7 @@ enum currMap{first, second, third};
 //=============================================================================
 //
 GameState::GameState(sf::RenderWindow* window, std::stack<std::unique_ptr<State>>* states)
-	:State(window, states), m_catTurn(false){
+	:State(window, states){
 	m_board.randomLava(DIFFICULTIES[(++m_difficulty) % 3]);
 	setBackground(Resources::instance().getTexture((int)Textures::GameBG));
     Resources::instance().playMusic(Sounds::GameMusic);
@@ -75,28 +72,20 @@ void GameState::mouseEvent(const sf::Event& evnt){
 }
 //=============================================================================
 //
-void GameState::undo(){
-	if (){
-		
-
-	}
-}
-//=============================================================================
-//
 void GameState::restartLevel(){
 	while (m_clicks > 0)
-		undo();
+		m_board.undo();
 }
 //=============================================================================
 //
-void GameState::handleEvents(){
-	if (m_catTurn){
+void GameState::handleEvents() {
+	if (m_catTurn) {
 		catsTurn();
 		return;
 	}
 
-	for (auto evnt = sf::Event(); m_window->pollEvent(evnt);){
-		switch (evnt.type){
+	for (auto evnt = sf::Event(); m_window->pollEvent(evnt);) {
+		switch (evnt.type) {
 		case sf::Event::Closed:
 			m_window->close(); break;
 
@@ -110,31 +99,13 @@ void GameState::handleEvents(){
 }
 //=============================================================================
 //
-void GameState::catJump(){
-	float deltaTime = 0.0f;
-	sf::Clock clock;
-	for (auto i = 0; i < JUMP_FRAMES; ++i){
-		m_window->clear();
-		deltaTime = clock.restart().asSeconds();
-		m_cat->jump(deltaTime);
-		m_cat->drawJump(*m_window);
-		m_window->display();
+
+//=============================================================================
+//
+void GameState::catsTurn() {
+	if (!m_board.validateRoute()) {
+		levelWin(); return;
 	}
-}
-//=============================================================================
-//
-void GameState::loadNextLevel(int difficulty){
-	m_board.clearBoard();
-	m_cat->newLevel(m_board.getTile(CAT_START));
-	m_board.randomLava(DIFFICULTIES[difficulty]);
-}
-//=============================================================================
-//
-void GameState::catsTurn(){
-	if (!m_board.validateRoute())
-		if (!m_board.findExit(m_cat->getPosition())){
-			levelWin(); return;
-		}
 	m_cat->tryToRun(m_board.escapeTile());
 	catJump();
 	if (m_cat->didCatWin())
@@ -155,7 +126,7 @@ void GameState::levelWin(){
 			}
 			else if (evnt.type == sf::Event::KeyPressed){
 				stop = true;
-				loadNextLevel((++m_difficulty) % 3);
+				m_board.nextLevel((++m_difficulty) % 3);
 				return;
 			}
 		}
@@ -200,7 +171,7 @@ void GameState::keyBoardEvent(const sf::Event& evnt){
 		m_window->close(); break;
 
 	case sf::Keyboard::U:
-		undo(); break;
+		m_board.undo(); break;
 
 	case sf::Keyboard::R:
 		restartLevel();

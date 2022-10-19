@@ -20,7 +20,7 @@ Board::Board()
     getTile(CAT_START).catHere();
 }
 //=============================================================================
-//
+//default d-tor
 Board::~Board(){
     m_board.clear();
     delete m_cat;
@@ -51,7 +51,7 @@ void Board::setAdjacents(){
         }
 }
 //=============================================================================
-//
+//this function resets all the game tiles of the board.
 void Board::clearBoard(){
     for(auto& row : m_board)
         for (auto& tile : row){
@@ -60,7 +60,8 @@ void Board::clearBoard(){
         }
 }
 //=============================================================================
-//
+//this function generates random lava tiles based on the level difficulty,
+//the harder the level the less tiles.
 void Board::randomLava(const sf::Vector2u& difficulty){
     auto numOfLava = Resources::instance().randomNumber(difficulty);
     srand((unsigned int)time(NULL));
@@ -72,11 +73,15 @@ void Board::randomLava(const sf::Vector2u& difficulty){
     }
 }
 //=============================================================================
+//general board update function to update all objects that are on it.
+//mostly for the buttons and the cat.
 void Board::update(const float& deltaTime) {
     m_cat->update(deltaTime);
 }
 //=============================================================================
-//
+//this function is called every time theres a mouse click to verify whether
+//the player has pressed on a tile, and if so work accordingly (if unclicked
+//tile then change to clicked, otherwise do nothing).
 bool Board::mouseClicked(const sf::Vector2f& mousePos){
     for (int i = 0; i < m_board.size(); i++)
         for (int j = 0; j < m_board[i].size(); j++)
@@ -129,13 +134,13 @@ void Board::searchRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queu
 }
 //=============================================================================
 //
-bool Board::validateRoute() const{
-    if (m_escapeRoute.empty())
-        return false;
+bool Board::validateRoute(){
+    if (m_escapeRoute.empty() && !m_cat->findExit(m_board))
+           return false;
 
     for (auto& tile : m_escapeRoute){
-        if (!m_board[tile.x][tile.y].isPassable())
-            return false;
+        if (!m_board[tile.x][tile.y].isPassable() && !m_cat->findExit(m_board))            
+               return false;
     }
     return true;
 }
@@ -171,5 +176,24 @@ Tile& Board::escapeTile(){
     auto nextTile = m_escapeRoute.back();
     m_escapeRoute.pop_back();
     return getTile(nextTile);
+}
+//=============================================================================
+//
+void Board::catJump(sf::RenderWindow& window) {
+    float deltaTime = 0.0f;
+    sf::Clock clock;
+    for (auto i = 0; i < JUMP_FRAMES; ++i) {
+        window.clear();
+        deltaTime = clock.restart().asSeconds();
+        m_cat->jump(deltaTime);
+        m_cat->drawJump(window);
+        window.display();
+    }
+}
+//=============================================================================
+void Board::nextLevel(int difficulty) {
+    clearBoard();
+    m_cat->newLevel(getTile(CAT_START));
+    randomLava(DIFFICULTIES[difficulty]);
 }
 //=============================================================================
