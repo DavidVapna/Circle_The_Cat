@@ -4,16 +4,16 @@
 #include "Tile.h"
 #include "Cat.h"
 //=============================================================================
-class Board
-{
+class Board{
 public:
 	Board();
+	~Board();
+	void update(const float& deltaTime);
 	void draw(sf::RenderWindow& window) const;
 	void randomLava(const sf::Vector2u& difficulty);
 	bool mouseClicked(const sf::Vector2f& mousePos);
 	bool undo();
 	void setAdjacents();
-	bool findExit(const sf::Vector2u& theCat);
 	bool validateRoute() const;
 	Tile& escapeTile();
 	Tile& getTile(sf::Vector2u wantedTile);
@@ -26,8 +26,10 @@ private:
 
 private:
 	std::vector<std::vector<Tile>> m_board;
-	std::list<sf::Vector2i> m_clickRoute;
+	std::list<sf::Vector2u> m_clickRoute;
 	std::list<sf::Vector2u> m_escapeRoute;
-
+	Cat* m_cat;
+	bool m_catTurn;
 
 };
+//=============================================================================

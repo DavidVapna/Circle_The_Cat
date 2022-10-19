@@ -54,6 +54,12 @@ add_subdirectory (resources)
 add_subdirectory (resources/Dino)
 add_subdirectory (resources/SoundEffects)
 
+add_subdirectory (States)
+add_subdirectory (States/include)
+add_subdirectory (States/src)
+
+
+
 if (MSVC)
 	set (SFML_STATIC_LIBRARIES TRUE)
 	set (SFML_DIR "C:/SFML/SFML-2.5.1/lib/cmake/SFML")

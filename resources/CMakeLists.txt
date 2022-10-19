@@ -2,3 +2,6 @@
 configure_file ("lava.png" ${CMAKE_BINARY_DIR} COPYONLY)
 configure_file ("gameBG.png" ${CMAKE_BINARY_DIR} COPYONLY)
 configure_file ("font.ttf" ${CMAKE_BINARY_DIR} COPYONLY)
+configure_file ("menuBG.jpg" ${CMAKE_BINARY_DIR} COPYONLY)
+configure_file ("gameMusic.wav" ${CMAKE_BINARY_DIR} COPYONLY)
+configure_file ("menuMusic.wav" ${CMAKE_BINARY_DIR} COPYONLY)

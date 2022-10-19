@@ -27,7 +27,8 @@ void Resources::loadTextures()
 {
 	m_textures[(int)Textures::Grass] = loadSfObj<sf::Texture>("grass.png");
 	m_textures[(int)Textures::Lava] = loadSfObj<sf::Texture>("lava.png");
-	m_textures[(int)Textures::BackG] = loadSfObj<sf::Texture>("gameBG.png");
+	m_textures[(int)Textures::GameBG] = loadSfObj<sf::Texture>("gameBG.png");
+	m_textures[(int)Textures::MenuBG] = loadSfObj<sf::Texture>("menuBG.jpg");
 	m_textures[(int)Textures::IdleCat] = loadSfObj<sf::Texture>("idleDino.png");
 	m_textures[(int)Textures::JumpCat] = loadSfObj<sf::Texture>("jumpDino.png");
 }
@@ -80,8 +81,12 @@ void Resources::playMusic(Sounds sound)
 {
 	switch (sound)
 	{
-	case Sounds::Theme:
-		m_music.openFromFile("theme.wav");
+	case Sounds::GameMusic:
+		m_music.openFromFile("gameMusic.wav");
+		break;
+
+	case Sounds::MenuMusic:
+		m_music.openFromFile("menuMusic.wav");
 		break;
 	}
 	m_music.play();

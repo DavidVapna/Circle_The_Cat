@@ -8,6 +8,8 @@ using Positions = std::pair<sf::Vector2u, sf::Vector2f>;
 //*** SCREEN SIZE STUFF ***
 constexpr auto GAME_WIDTH = 850;
 constexpr auto GAME_HEIGHT = 850;
+
+const sf::Vector2i MENU_SIZE(850, 850);
 //=============================================================================
 //if we want to make the game wides/shorter we will update the size here
 //should always be N X N.
@@ -27,7 +29,7 @@ constexpr auto CLICKS_TEXT = "CLICKS: ";
 constexpr auto LOSSING_TEXT = "THE CAT RAN AWAY!\n   TRY AGAIN? (Y/N)";
 constexpr auto WIN_TEXT = "YOU WIN! \nPRESS ANY KEY TO CONTINUE";
 //=============================================================================
-const sf::Vector2f TITLE_POSITION(GAME_WIDTH * 0.2, GAME_HEIGHT * 0.035);
+const sf::Vector2f TITLE_POSITION(GAME_WIDTH * 0.5, GAME_HEIGHT * 0.035);
 const sf::Vector2f CLICKS_POSITION(30, GAME_HEIGHT - 35);
 const sf::Vector2f UNDO_POSITION(GAME_WIDTH * 0.8, GAME_HEIGHT * 0.94);
 const sf::Vector2f LOSSING_POSITION(GAME_WIDTH * 0.20, GAME_HEIGHT * 0.45);
@@ -56,11 +58,25 @@ constexpr auto JUMP_SWITCH( .1f );
 //=============================================================================
 constexpr auto GENERAL = 0;
 //=============================================================================
-enum class Textures { Grass, Lava, BackG, IdleCat, JumpCat, MaxTextures};
+enum class Textures { Grass, Lava, GameBG, MenuBG, IdleCat, JumpCat, MaxTextures};
 enum class Texts{Title, Counter, Undo, Lossing, WIN, MaxTexts};
-enum class Sounds{Jump, MaxSounds, Theme};
+enum class Sounds{Jump, MaxSounds, MenuMusic, GameMusic};
 enum class Fonts{Classic, MaxFonts};
 //=============================================================================
 const int MUSIC_VOLUME = 25;
 const int EFFECTS_VOLUME = 10;
+//=============================================================================
+enum class States{Menu, Game};
+//=============================================================================
+
+//=============================================================================
+const sf::Vector2f BUTTONS_SIZE(200, 100);
+const sf::Vector2f PLAY_POS(MENU_SIZE.x / 2.f, MENU_SIZE.y* (2.f / 7.f));
+const sf::Vector2f HELP_POS(MENU_SIZE.x / 2.f, MENU_SIZE.y* (4.f / 7.f));
+const sf::Vector2f QUIT_POS(MENU_SIZE.x / 2.f, MENU_SIZE.y* (6.f / 7.f));
+const sf::Vector2f CONTINUE_BUTTON(400.f, 400.f);
+constexpr auto PLAY_TEXT("Play");
+constexpr auto QUIT_TEXT("Exit");
+constexpr auto HELP_TEXT("Help");
+constexpr auto CONTINUE_TEXT("Conitune");
 //=============================================================================

@@ -9,8 +9,7 @@
 #include <vector>
 #include "Macros.h"
 //=============================================================================
-class Resources
-{
+class Resources{
 public:
 	//public functions
 	static Resources& instance();

@@ -12,8 +12,7 @@
 class Tile;
 class Animation;
 //=============================================================================
-class Cat
-{
+class Cat{
 public:
 	Cat(Tile& startingTile);
 	~Cat();
@@ -26,13 +25,13 @@ public:
 	void jump(float deltaTime);
 	bool didCatWin() const;
 	void newLevel(Tile& startingTile);
-
+	bool findExit(std::vector<std::vector<Tile>>& gameBoard);
 
 private:
 	enum class State{idle, Jump};
 
 private:
-	std::list<Tile*> m_jorney;
+	std::list<Tile*> m_visitedTiles;
 	std::vector<Animation*> m_animation;
 	bool m_faceRight;
 	
@@ -41,6 +40,5 @@ private:
 
 	sf::Vector2f m_frame;
 	sf::Vector2f m_pos;
-
 };
 //=============================================================================
