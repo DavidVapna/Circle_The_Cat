@@ -5,7 +5,7 @@
 //=============================================================================
 //
 Cat::Cat(Tile& startingTile)
-    :m_faceRight(true){
+    :m_faceRight(true), m_jumping(false){
     m_visitedTiles.push_back(&startingTile);
     auto& idle = Resources::instance().getTexture((int)Textures::IdleCat);
     auto& jump = Resources::instance().getTexture((int)Textures::JumpCat);
@@ -31,6 +31,7 @@ Cat::Cat(Tile& startingTile)
     m_pos = startingTile.getPos().second + LOOKING_RIGHT;
 
     m_idle.setPosition(m_pos);
+    startingTile.catHere();
 }
 //=============================================================================
 Cat::~Cat(){
@@ -39,18 +40,26 @@ Cat::~Cat(){
 }
 //=============================================================================
 void Cat::update(float deltaTime){
-    m_animation[(int)State::idle]->update(deltaTime, m_faceRight);
-    m_idle.setTextureRect(m_animation[(int)State::idle]->uvRect);
+    if (m_jumping) {
+        m_animation[(int)State::Jump]->update(deltaTime, m_faceRight);
+        m_jump.setTextureRect(m_animation[(int)State::Jump]->uvRect);
+        m_jump.move(m_frame);
+    }
+    else//idle animation
+        m_animation[(int)State::idle]->update(deltaTime, m_faceRight);
+        m_idle.setTextureRect(m_animation[(int)State::idle]->uvRect);
+
+
 }
 //=============================================================================
 //
 void Cat::draw(sf::RenderWindow& window) const{
+    if (m_jumping) {
+        //for (auto i = 0; i < JUMP_FRAMES; ++i) {
+            window.draw(m_jump);
+        //}
+    }
     window.draw(m_idle);
-}
-//=============================================================================
-//
-void Cat::drawJump(sf::RenderWindow& window) const{
-    window.draw(m_jump);
 }
 //=============================================================================
 //
@@ -59,7 +68,7 @@ sf::Vector2u Cat::getPosition() const{
 }
 //=============================================================================
 //
-void Cat::tryToRun(Tile& destination){
+void Cat::catMove(Tile& destination){
     m_visitedTiles.back()->catLeft();
     m_visitedTiles.push_back(&destination);
     auto currPos = m_pos;
@@ -79,11 +88,11 @@ void Cat::tryToRun(Tile& destination){
 }
 //=============================================================================
 //
-void Cat::jump(float deltaTime){
-    m_animation[(int)State::Jump]->update(deltaTime, m_faceRight);
-    m_jump.setTextureRect(m_animation[(int)State::Jump]->uvRect);
-    m_jump.move(m_frame);
+void Cat::jump(sf::RenderWindow& window){
+
+
 }
+
 //=============================================================================
 //
 bool Cat::didCatWin() const{
@@ -113,19 +122,46 @@ void Cat::newLevel(Tile& startingTile){
     m_idle.setPosition(m_pos);
 }
 //=============================================================================
-bool Cat::findExit(std::vector<std::vector<Tile>> &gameBoard) {
-    getTile(theCat).setVisit();
-    std::vector<std::pair<sf::Vector2u, sf::Vector2u>> queue;
-    queue.push_back(std::make_pair(theCat, sf::Vector2u{}));
+//
+bool Cat::findExit(std::vector<std::vector<Tile>>& gameBoard, std::list<sf::Vector2u>& escape) {
+
     bool found = false;
-    std::list<sf::Vector2u> escapeRoute;
+    auto catPos = m_visitedTiles.back()->getPos().first;
+    gameBoard[catPos.x][catPos.y].setVisit();
+    std::vector<std::pair<sf::Vector2u, sf::Vector2u>> queue;
+    queue.push_back(std::make_pair(catPos, sf::Vector2u{}));
 
-    searchRoute(queue, found);
-    if (found)
-        setEscapeRoute(queue, escapeRoute);
-    else
-        senselessRoute(theCat, found);
+    for (int i = 0; i < queue.size() && !found; ++i) {
+        for (auto adj : gameBoard[queue[i].first.x][queue[i].first.y].getAdjacents()) {
+            if (gameBoard[adj.x][adj.y].isPassable() && !gameBoard[adj.x][adj.y].visited()) {
+                queue.push_back(std::make_pair(adj, queue[i].first));
+                if (gameBoard[adj.x][adj.y].isLossing()) {
+                    found = true; break;
+                }
+                gameBoard[adj.x][adj.y].setVisit();
+            }
+        }
+    }
 
-    return found;
+    //if we found a valid escape then we save it in the queue so we can 
+    if (found) {
+        escape.push_back(queue.back().first);
+        for (auto i = --queue.end(); i != queue.begin(); --i) {
+            if (i->first == escape.back())
+                escape.push_back(i->second);
+        }
+        escape.pop_back();
+        return true;
+    }
+    else {
+        escape.clear();
+        for (auto adj : m_visitedTiles.back()->getAdjacents()) {
+            if (gameBoard[adj.x][adj.y].isPassable()) {
+                escape.push_back(adj);
+                return true;
+            }
+        }
+    }
+    return false;
 }
 //=============================================================================

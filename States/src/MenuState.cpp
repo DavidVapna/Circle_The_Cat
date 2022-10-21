@@ -35,11 +35,6 @@ void MenuState::setButtons(){
         (QUIT_POS, BUTTONS_SIZE, QUIT_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
 }
 //=============================================================================
-void MenuState::setWindow(){
-    //m_window->setSize(sf::Vector2u(MENU_SIZE.x, MENU_SIZE.y));
-    //m_window->setPosition(MENU_POS);
-}
-//=============================================================================
 void MenuState::draw(){
     m_window->draw(m_backGround);
     m_window->draw(m_title);
@@ -51,34 +46,26 @@ void MenuState::draw(){
 //=============================================================================
 void MenuState::update(const float& deltaTime){
     updateMouse();
-    updateInput(deltaTime);
-    for (auto& button : m_buttons){
+
+    for (auto& button : m_buttons) {
         button.second->update(m_mouseView);
     }
-    if (m_buttons.find(Quit_B)->second->isClicked()){
+    if (m_buttons.find(Quit_B)->second->isClicked()) {
         //maybeAddDialog.
         this->m_end = true;
     }
-    if (m_buttons.find(Play_B)->second->isClicked() || 
-        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P)){
+    if (m_buttons.find(Play_B)->second->isClicked() ||
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P)) {
         m_states->emplace(std::make_unique<GameState>(m_window, this->m_states));
+        return;
+    }
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         return;
     }
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)){
         //need to ask dialog.
         this->m_end = true;
-        
-    }
-}
-//=============================================================================
-void MenuState::updateInput(const float& deltaTime){
-    return;
-}
-//=============================================================================
-void MenuState::mouseEvent(const sf::Event& evnt){
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
-        return;
     }
 }
 //=============================================================================

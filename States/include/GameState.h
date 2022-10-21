@@ -10,20 +10,19 @@ public:
 	virtual ~GameState();
 	virtual void draw() override;
 	virtual void update(const float& deltaTime) override;
-	void updateInput(const float& deltaTime)override;
-	virtual void setButtons() override;
-
 
 	void lostToCat();
 	void levelWin();
+	
 
-	void catsTurn();
 
 private:
 	void handleEvents();
-	virtual void mouseEvent(const sf::Event& evnt) override;
 	virtual void keyBoardEvent(const sf::Event& evnt) override;
+	virtual void setButtons() override;
 	void restartLevel();
+
+
 
 	//
 	void setTexts();
@@ -32,13 +31,12 @@ private:
 
 
 private:
-	Board m_board;
+	Board *m_board;
 	float m_deltaTime;
-	sf::Clock m_gameClock;
 	unsigned m_clicks = 0;
 	std::vector<sf::Text> m_texts;
 	int m_difficulty = -1;
-	sf::Clock m_clock;
+	sf::Clock m_gameClock;
 };
 //=============================================================================
 

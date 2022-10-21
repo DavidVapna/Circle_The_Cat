@@ -3,11 +3,13 @@
 #include "Resources.h"
 //=============================================================================
 enum currMap{first, second, third};
+enum GameButtons{ Undo_B, Quit_B, Pause_B};
 //=============================================================================
 //
 GameState::GameState(sf::RenderWindow* window, std::stack<std::unique_ptr<State>>* states)
 	:State(window, states){
-	m_board.randomLava(DIFFICULTIES[(++m_difficulty) % 3]);
+	m_board = new Board(*window);
+	m_board->randomLava(DIFFICULTIES[(++m_difficulty) % 3]);
 	setBackground(Resources::instance().getTexture((int)Textures::GameBG));
     Resources::instance().playMusic(Sounds::GameMusic);
 	setTexts();
@@ -15,37 +17,69 @@ GameState::GameState(sf::RenderWindow* window, std::stack<std::unique_ptr<State>
 //=============================================================================
 //
 GameState::~GameState(){
+	delete m_board;
 
 }
 //=============================================================================
 //
 void GameState::setButtons(){
-	// m_buttons[(int)MenuButtons::Play_B] = std::make_unique<Button>
-	//(PLAY_POS, BUTTONS_SIZE, PLAY_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
-	//m_buttons[(int)MenuButtons::Help_B] = std::make_unique<Button>
+	m_buttons[(int)GameButtons::Undo_B] = std::make_unique<Button>
+		(UNDO_POSITION, BUTTONS_SIZE, UNDO_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
 
     return;
 }
 //=============================================================================
 //
 void GameState::update(const float& deltaTime){
-	m_deltaTime = m_clock.restart().asSeconds();
-
-	m_texts[(int)Texts::Counter].setString(CLICKS_TEXT + std::to_string(m_clicks));
+	if(m_board->didPlayerWin()) {
+		levelWin();
+	}
+	if (m_board->didCatWin()) {
+		lostToCat();
+	}
 
 	m_deltaTime = m_gameClock.restart().asSeconds();
-	updateInput(m_deltaTime);
-	m_board.update(m_deltaTime);
+	updateMouse();
 
-}
-//=============================================================================
-//
-void GameState::updateInput(const float& deltaTime){
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)){
-        this->m_end = true;
-        Resources::instance().stopMusic();
-        return;
-    }
+	for (auto& button : m_buttons) {
+		button.second->update(m_mouseView);
+	}
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+		if (m_board->mouseClicked(m_mouseView)) {
+			m_clicks++;
+		}
+		if (m_texts[(int)Texts::Undo].getGlobalBounds().contains(m_mouseView)) {
+			m_board->undo();
+			m_clicks--;
+		}
+		
+		//updateButtons();
+		
+		//if (m_buttons.find(Quit_B)->second->isClicked()) {
+		//	//maybeAddDialog.
+		//	this->m_end = true;
+		//}
+		//if (m_buttons.find(Undo_B)->second->isClicked() ||
+		//	sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P)) {
+		//	m_states->emplace(std::make_unique<GameState>(m_window, this->m_states));
+		//	return;
+		//}
+	}
+	//updateInput()
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
+		this->m_end = true;
+		Resources::instance().stopMusic();
+		return;
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)) {
+		//need to ask dialog.
+		this->m_end = true;
+
+	}
+	m_texts[(int)Texts::Counter].setString(CLICKS_TEXT + std::to_string(m_clicks));
+	m_board->update(m_deltaTime);
+
+	//m_board->checkIfWin();
 }
 //=============================================================================
 //
@@ -55,35 +89,17 @@ void GameState::draw(){
 	for (int i = 0; i < 3; i++)
 		m_window->draw(m_texts[i]);
 
-	m_board.draw(*m_window);
-}
-//=============================================================================
-//
-void GameState::mouseEvent(const sf::Event& evnt){
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
-		if (m_board.mouseClicked(m_mouseView)){
-			m_clicks++;
-		}
-		if (m_texts[(int)Texts::Undo].getGlobalBounds().contains(m_mouseView)) {
-			m_board.undo();
-			m_clicks--;
-		}
-	}
+	m_board->draw();
 }
 //=============================================================================
 //
 void GameState::restartLevel(){
 	while (m_clicks > 0)
-		m_board.undo();
+		m_board->undo();
 }
 //=============================================================================
 //
 void GameState::handleEvents() {
-	if (m_catTurn) {
-		catsTurn();
-		return;
-	}
-
 	for (auto evnt = sf::Event(); m_window->pollEvent(evnt);) {
 		switch (evnt.type) {
 		case sf::Event::Closed:
@@ -91,31 +107,12 @@ void GameState::handleEvents() {
 
 		case sf::Event::KeyPressed:
 			keyBoardEvent(evnt); break;
-
-		case sf::Event::MouseButtonPressed:
-			mouseEvent(evnt); break;
 		}
 	}
 }
 //=============================================================================
-//
-
-//=============================================================================
-//
-void GameState::catsTurn() {
-	if (!m_board.validateRoute()) {
-		levelWin(); return;
-	}
-	m_cat->tryToRun(m_board.escapeTile());
-	catJump();
-	if (m_cat->didCatWin())
-		lostToCat();
-	m_catTurn = false;
-}
-//=============================================================================
 void GameState::levelWin(){
 	bool stop = false;
-	m_catTurn = false;
 	while (!stop){
 		m_window->clear();
 		draw();
@@ -126,7 +123,7 @@ void GameState::levelWin(){
 			}
 			else if (evnt.type == sf::Event::KeyPressed){
 				stop = true;
-				m_board.nextLevel((++m_difficulty) % 3);
+				m_board->nextLevel((++m_difficulty) % 3);
 				return;
 			}
 		}
@@ -134,20 +131,19 @@ void GameState::levelWin(){
 	}
 }
 //=============================================================================
-void GameState::lostToCat(){
+void GameState::lostToCat() {
 	bool stop = false;
-	m_catTurn = false;
-	while (!stop){
+	while (!stop) {
 		m_window->clear();
 		draw();
 		m_window->draw(m_texts[(int)Texts::Lossing]);
-		for (auto evnt = sf::Event(); m_window->pollEvent(evnt);){
-			switch (evnt.type){
+		for (auto evnt = sf::Event(); m_window->pollEvent(evnt);) {
+			switch (evnt.type) {
 			case sf::Event::Closed:
 				stop = true; m_window->close(); break;
 
-			case sf::Event::KeyPressed:{
-				switch (evnt.key.code){
+			case sf::Event::KeyPressed: {
+				switch (evnt.key.code) {
 				case sf::Keyboard::Escape:
 					stop = true; m_window->close(); break;
 				case sf::Keyboard::N:
@@ -171,7 +167,7 @@ void GameState::keyBoardEvent(const sf::Event& evnt){
 		m_window->close(); break;
 
 	case sf::Keyboard::U:
-		m_board.undo(); break;
+		m_board->undo(); break;
 
 	case sf::Keyboard::R:
 		restartLevel();

@@ -3,9 +3,9 @@
 //=============================================================================
 //Board C-Tor, initializing the game board by loading the tile objects according
 //to the defined game board size.
-Board::Board()
-    :m_catTurn(false){
-    m_cat = new Cat(getTile(CAT_START));
+Board::Board(sf::RenderWindow& window)
+    :m_catTurn(false), m_won(false), m_lost(false), m_window(&window), m_clickCD(0),m_maxClickCD(1){
+
     for (unsigned row = 0; row < TILES_IN_COL; row++){
         std::vector<Tile> tempRow;
         sf::Vector2f tilePos(BOARD_START.x + ((row % 2) * TILE_SIZE.x / 2), (float)(row * TILE_SIZE.y) + BOARD_START.y);
@@ -17,7 +17,7 @@ Board::Board()
         m_board.push_back(tempRow);
     }
     setAdjacents();
-    getTile(CAT_START).catHere();
+    m_cat = new Cat(getTile(CAT_START));
 }
 //=============================================================================
 //default d-tor
@@ -71,36 +71,55 @@ void Board::randomLava(const sf::Vector2u& difficulty){
         sf::Vector2u tile(rand() % TILES_IN_COL, rand() % TILES_IN_ROW);
         if (!getTile(tile).isCatHere() && getTile(tile).setLava());
     }
+    m_cat->findExit(m_board, m_escapeRoute);
 }
 //=============================================================================
 //general board update function to update all objects that are on it.
 //mostly for the buttons and the cat.
 void Board::update(const float& deltaTime) {
     m_cat->update(deltaTime);
+    if (m_catTurn) {
+        catsTurn();
+    }
 }
 //=============================================================================
 //this function is called every time theres a mouse click to verify whether
 //the player has pressed on a tile, and if so work accordingly (if unclicked
 //tile then change to clicked, otherwise do nothing).
 bool Board::mouseClicked(const sf::Vector2f& mousePos){
-    for (int i = 0; i < m_board.size(); i++)
-        for (int j = 0; j < m_board[i].size(); j++)
-            if (m_board[i][j].setLava(mousePos)){
-                m_clickRoute.push_front(sf::Vector2u(i, j));
-                m_catTurn = true;
-                m_cat->findExit(this->m_board);
-                return true;
+    
+    if(m_clickCD < m_maxClickCD)
+        m_clickCD += 0.30f;
+    else {
+        m_clickCD = 0.f;
+        for (int i = 0; i < m_board.size(); i++) {
+            for (int j = 0; j < m_board[i].size(); j++) {
+                if (m_board[i][j].setLava(mousePos)) {
+                    m_clickRoute.push_front(sf::Vector2u(i, j));
+                    m_catTurn = true;
+                    //we dont want to run the entire searching algorithm if the fastest
+                    //escape route isnt changed.
+                    for (auto tile : m_escapeRoute) {
+                        if (tile.x == i && tile.y == j) {
+                            m_cat->findExit(this->m_board, m_escapeRoute);
+                        }
+                    }
+                    return true;
+                }
             }
+        }
+    }
     return false;
 }
 //=============================================================================
-//
-void Board::draw(sf::RenderWindow& window) const{
+//the function draws the cat based on his state, if its his turn and he is jumping
+//or if its the players turn then the cat is idel, and just general tiles drawing.
+void Board::draw() const{
     for (auto& row : m_board)
         for (auto& tile : row)
-            tile.draw(window);
+            tile.draw(*m_window);
 
-    m_catTurn ? m_cat->drawJump(window) : m_cat->draw(window);
+    m_cat->draw(*m_window);
 }
 //=============================================================================
 //
@@ -116,57 +135,6 @@ bool Board::undo(){
 }
 //=============================================================================
 //
-void Board::searchRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue, bool &found){
-    for (int i = 0; i < queue.size() && !found; ++i){
-        for (auto adjecent : getTile(queue[i].first).getAdjacents()){
-            if (getTile(adjecent).isPassable() && !getTile(adjecent).visited()){
-                queue.push_back(std::make_pair(adjecent, queue[i].first));
-                if (getTile(adjecent).isLossing()){
-                    found = true; break;
-                }
-                getTile(adjecent).setVisit();
-            }
-        }
-    }
-    for (auto& row : m_board)
-        for (auto& tile : row)
-            tile.resetVisit();
-}
-//=============================================================================
-//
-bool Board::validateRoute(){
-    if (m_escapeRoute.empty() && !m_cat->findExit(m_board))
-           return false;
-
-    for (auto& tile : m_escapeRoute){
-        if (!m_board[tile.x][tile.y].isPassable() && !m_cat->findExit(m_board))            
-               return false;
-    }
-    return true;
-}
-//=============================================================================
-//
-void Board::setEscapeRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue, std::list<sf::Vector2u>& route){
-    route.push_back(queue.back().first);
-    for (auto i = --queue.end(); i != queue.begin(); --i){
-        if (i->first == route.back())
-            route.push_back(i->second);
-    }
-    route.pop_back();
-    m_escapeRoute = route;
-}
-//=============================================================================
-//
-void Board::senselessRoute(const sf::Vector2u& theCat, bool &found){
-    for (auto adjecent : getTile(theCat).getAdjacents())
-        if (getTile(adjecent).isPassable()){
-            m_escapeRoute.push_back(adjecent);
-            found = true;
-            break;
-        }
-}
-//=============================================================================
-//
 Tile& Board::getTile(sf::Vector2u wantedTile){
     return m_board[wantedTile.x][wantedTile.y];
 }
@@ -177,23 +145,60 @@ Tile& Board::escapeTile(){
     m_escapeRoute.pop_back();
     return getTile(nextTile);
 }
-//=============================================================================
-//
-void Board::catJump(sf::RenderWindow& window) {
-    float deltaTime = 0.0f;
-    sf::Clock clock;
-    for (auto i = 0; i < JUMP_FRAMES; ++i) {
-        window.clear();
-        deltaTime = clock.restart().asSeconds();
-        m_cat->jump(deltaTime);
-        m_cat->drawJump(window);
-        window.display();
-    }
-}
+
 //=============================================================================
 void Board::nextLevel(int difficulty) {
     clearBoard();
     m_cat->newLevel(getTile(CAT_START));
     randomLava(DIFFICULTIES[difficulty]);
+}
+//=============================================================================
+// 
+void Board::catsTurn() {
+    if (!validateEscape())
+        m_won = true;
+    else {
+        m_cat->catMove(escapeTile());
+        m_cat->jump(*m_window);
+        m_lost = m_cat->didCatWin();
+    }
+    m_catTurn = false;
+}
+//=============================================================================
+//
+bool Board::validateEscape() {
+
+    bool found = false;
+
+    if (m_escapeRoute.empty() && !m_cat->findExit(m_board, m_escapeRoute))
+        return false;
+
+    else {
+        for (auto& tile : m_escapeRoute) {
+            if (!m_board[tile.x][tile.y].isPassable()) {
+                if (!m_cat->findExit(m_board, m_escapeRoute))
+                    return false;
+            }
+        }
+    }
+
+    for (auto& row : m_board)
+        for (auto& tile : row)
+            tile.resetVisit();
+
+    return true;
+}
+//=============================================================================
+//
+bool Board::didCatWin() {
+    if (m_lost) {
+        m_lost = false;
+        return true;
+    }
+    return false;
+}
+//=============================================================================
+bool Board::didPlayerWin() {
+    return m_won;
 }
 //=============================================================================

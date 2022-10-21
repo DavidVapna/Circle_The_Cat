@@ -10,17 +10,18 @@ class State
 public:
 	State(sf::RenderWindow* window,	std::stack<std::unique_ptr<State>>* m_states);
 	virtual ~State();
-	virtual void setBackground(const sf::Texture& texture);
 	virtual void draw() = 0;
 	virtual void update(const float& deltaTime) = 0;
-	virtual void updateInput(const float& deltaTime) = 0;
-	virtual void setButtons() = 0;
 	virtual bool isEnd() const;
-	virtual void updateMouse();
+
+
 
 protected:
-	virtual void mouseEvent(const sf::Event& evnt) = 0;
+	virtual void updateMouse();
+	virtual void setBackground(const sf::Texture& texture);
+	virtual void setButtons() = 0;
 	virtual void keyBoardEvent(const sf::Event& evnt) = 0;
+
 
 protected:
 	sf::RenderWindow* m_window;

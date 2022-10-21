@@ -6,7 +6,6 @@
 Controller::Controller()
     :m_currMod(States::Menu){
     m_states.emplace(initMenu());
-    m_states.top()->setWindow();
 }
 //=============================================================================
 //
@@ -23,8 +22,6 @@ void Controller::update(){
         m_states.top()->update(0);
         if (m_states.top()->isEnd()){
             m_states.pop();
-            if (!m_states.empty())
-                m_states.top()->setWindow();
         }
     }
     else
