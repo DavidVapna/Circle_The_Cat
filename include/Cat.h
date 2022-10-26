@@ -21,12 +21,11 @@ public:
 	void draw(sf::RenderWindow& window) const;
 	sf::Vector2u getPosition() const;
 	void undo();
-	void jump(sf::RenderWindow& window);
 	bool didCatWin() const;
 	void newLevel(Tile& startingTile);
 	bool findExit(std::vector<std::vector<Tile>>& gameBoard, std::list<sf::Vector2u>& escape);
-	
-
+	void ResetLevel();
+	bool isJumping() const;
 
 private:
 	enum class State{idle, Jump};
@@ -42,7 +41,7 @@ private:
 
 	sf::Vector2f m_frame;
 	sf::Vector2f m_pos;
-
+	int m_jumpCounter;
 
 };
 //=============================================================================

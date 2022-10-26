@@ -13,19 +13,21 @@ public:
 	void randomLava(const sf::Vector2u& difficulty);
 	bool mouseClicked(const sf::Vector2f& mousePos);
 	bool undo();
-	void setAdjacents();
-	bool validateEscape();
-	Tile& escapeTile();
-	Tile& getTile(sf::Vector2u wantedTile);
-	void clearBoard();
-	void nextLevel(int difficulty);
-	void catsTurn();
+	void nextLevel (int difficulty);
 	bool didPlayerWin();
 	bool didCatWin();
+	void resetLevel();
+
+
 
 private:
+	Tile& getTile(sf::Vector2u wantedTile);
+	void setAdjacents();
+	void clearLava();
+	bool validateEscape();
 	void searchRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue, bool& found);
 	void setEscapeRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue, std::list<sf::Vector2u>& route);
+	void resetVisit();
 
 private:
 	std::vector<std::vector<Tile>> m_board;
@@ -36,7 +38,5 @@ private:
 	bool m_lost;
 	sf::RenderWindow *m_window;
 	std::list<sf::Vector2u> m_escapeRoute;
-	float m_clickCD;
-	float m_maxClickCD;
 };
 //=============================================================================

@@ -4,8 +4,7 @@
 //Board C-Tor, initializing the game board by loading the tile objects according
 //to the defined game board size.
 Board::Board(sf::RenderWindow& window)
-    :m_catTurn(false), m_won(false), m_lost(false), m_window(&window), m_clickCD(0),m_maxClickCD(1){
-
+    :m_catTurn(false), m_won(false), m_lost(false), m_window(&window){
     for (unsigned row = 0; row < TILES_IN_COL; row++){
         std::vector<Tile> tempRow;
         sf::Vector2f tilePos(BOARD_START.x + ((row % 2) * TILE_SIZE.x / 2), (float)(row * TILE_SIZE.y) + BOARD_START.y);
@@ -20,7 +19,7 @@ Board::Board(sf::RenderWindow& window)
     m_cat = new Cat(getTile(CAT_START));
 }
 //=============================================================================
-//default d-tor
+//Basic d-tor
 Board::~Board(){
     m_board.clear();
     delete m_cat;
@@ -52,10 +51,9 @@ void Board::setAdjacents(){
 }
 //=============================================================================
 //this function resets all the game tiles of the board.
-void Board::clearBoard(){
+void Board::clearLava(){
     for(auto& row : m_board)
         for (auto& tile : row){
-            tile.catLeft();
             tile.setPassable();
         }
 }
@@ -67,9 +65,10 @@ void Board::randomLava(const sf::Vector2u& difficulty){
     srand((unsigned int)time(NULL));
 
     for (int counter = 0; counter < numOfLava; counter++){
-
         sf::Vector2u tile(rand() % TILES_IN_COL, rand() % TILES_IN_ROW);
-        if (!getTile(tile).isCatHere() && getTile(tile).setLava());
+        if (getTile(tile).isCatHere() || !getTile(tile).setLava()) {
+            counter--;
+        }
     }
     m_cat->findExit(m_board, m_escapeRoute);
 }
@@ -77,33 +76,30 @@ void Board::randomLava(const sf::Vector2u& difficulty){
 //general board update function to update all objects that are on it.
 //mostly for the buttons and the cat.
 void Board::update(const float& deltaTime) {
-    m_cat->update(deltaTime);
-    if (m_catTurn) {
-        catsTurn();
+    if (m_catTurn && !m_cat->isJumping()) {
+        if (!validateEscape())
+            m_won = true;
+        else {
+            m_cat->catMove(getTile(m_escapeRoute.back()));
+            m_escapeRoute.pop_back();
+            m_lost = m_cat->didCatWin();
+            m_catTurn = false;
+        }
     }
+    m_cat->update(deltaTime);
 }
 //=============================================================================
 //this function is called every time theres a mouse click to verify whether
 //the player has pressed on a tile, and if so work accordingly (if unclicked
 //tile then change to clicked, otherwise do nothing).
-bool Board::mouseClicked(const sf::Vector2f& mousePos){
-    
-    if(m_clickCD < m_maxClickCD)
-        m_clickCD += 0.30f;
-    else {
-        m_clickCD = 0.f;
+bool Board::mouseClicked(const sf::Vector2f& mousePos) {
+
+    if (!m_catTurn) {
         for (int i = 0; i < m_board.size(); i++) {
             for (int j = 0; j < m_board[i].size(); j++) {
                 if (m_board[i][j].setLava(mousePos)) {
                     m_clickRoute.push_front(sf::Vector2u(i, j));
                     m_catTurn = true;
-                    //we dont want to run the entire searching algorithm if the fastest
-                    //escape route isnt changed.
-                    for (auto tile : m_escapeRoute) {
-                        if (tile.x == i && tile.y == j) {
-                            m_cat->findExit(this->m_board, m_escapeRoute);
-                        }
-                    }
                     return true;
                 }
             }
@@ -123,73 +119,68 @@ void Board::draw() const{
 }
 //=============================================================================
 //
-bool Board::undo(){
+bool Board::undo() {
     if (m_clickRoute.empty())
         return false;
-    else {
-        m_cat->undo();
-        getTile(m_clickRoute.front()).setPassable();
-        m_clickRoute.pop_front();
-    }
-        return true;
+
+    m_cat->undo();
+    getTile(m_clickRoute.front()).setPassable();
+    m_clickRoute.pop_front();
+    m_cat->findExit(m_board, m_escapeRoute);
+    return true;
 }
 //=============================================================================
-//
+//fastest way to reset the level is to undo all steps that way we wont get
+//have to go over ALL the tiles.
+void Board::resetLevel() {
+    while (undo()) {};
+}
+//=============================================================================
+//quick access function
 Tile& Board::getTile(sf::Vector2u wantedTile){
     return m_board[wantedTile.x][wantedTile.y];
 }
 //=============================================================================
-//
-Tile& Board::escapeTile(){
-    auto nextTile = m_escapeRoute.back();
-    m_escapeRoute.pop_back();
-    return getTile(nextTile);
-}
-
-//=============================================================================
+//reloading next level with higher difficulty (capped at 3).
 void Board::nextLevel(int difficulty) {
-    clearBoard();
+    clearLava();
     m_cat->newLevel(getTile(CAT_START));
     randomLava(DIFFICULTIES[difficulty]);
 }
 //=============================================================================
-// 
-void Board::catsTurn() {
-    if (!validateEscape())
-        m_won = true;
-    else {
-        m_cat->catMove(escapeTile());
-        m_cat->jump(*m_window);
-        m_lost = m_cat->didCatWin();
-    }
-    m_catTurn = false;
-}
-//=============================================================================
-//
+//this function makes sures that the current escape route of the cat is still
+//available for it, if not it'll try to find a new one.
+//if there isnt one, then it means the player has won.
 bool Board::validateEscape() {
 
-    bool found = false;
-
-    if (m_escapeRoute.empty() && !m_cat->findExit(m_board, m_escapeRoute))
-        return false;
-
+    if (m_escapeRoute.empty()) {
+        if (!m_cat->findExit(m_board, m_escapeRoute)) {
+            return false;
+        }
+    }
     else {
         for (auto& tile : m_escapeRoute) {
             if (!m_board[tile.x][tile.y].isPassable()) {
-                if (!m_cat->findExit(m_board, m_escapeRoute))
+                if (!m_cat->findExit(m_board, m_escapeRoute)) {
                     return false;
+                }
             }
         }
     }
-
-    for (auto& row : m_board)
-        for (auto& tile : row)
-            tile.resetVisit();
+    resetVisit();
 
     return true;
 }
 //=============================================================================
-//
+// function to reset all visits made for whatever reason throughout the game.
+void Board::resetVisit() {
+    for (auto& row : m_board)
+        for (auto& tile : row)
+            tile.resetVisit();
+}
+//=============================================================================
+//this function chekcs whether the cat has reached the edges of the board.
+//if it did it returns true but resets the boolean
 bool Board::didCatWin() {
     if (m_lost) {
         m_lost = false;
@@ -198,7 +189,13 @@ bool Board::didCatWin() {
     return false;
 }
 //=============================================================================
+//this function chekcs whether the player has circled the cat succefully.
+//if they did it returns true but resets the boolean.
 bool Board::didPlayerWin() {
-    return m_won;
+    if (m_won) {
+        m_won = false;
+        return true;
+    }
+    return false;
 }
 //=============================================================================

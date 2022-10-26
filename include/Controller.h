@@ -16,8 +16,6 @@ private:
 	std::unique_ptr<State> initMenu();
 	void update();
 	void display();
-	void handleEvents();
-	void keyBoardEvent(const sf::Event& evnt);
 
 private:
 	States m_currMod;

@@ -17,9 +17,10 @@ void Controller::run(){
 }
 //=============================================================================
 void Controller::update(){
-    handleEvents();
     if (!m_states.empty()){
         m_states.top()->update(0);
+        m_states.top()->handleEvents();
+
         if (m_states.top()->isEnd()){
             m_states.pop();
         }
@@ -29,7 +30,7 @@ void Controller::update(){
 }
 //=============================================================================
 // 
-void Controller::display(){
+void Controller::display() {
     m_window->clear();
 
     if (!m_states.empty())
@@ -52,22 +53,3 @@ std::unique_ptr<State> Controller::initMenu(){
 }
 //=============================================================================
 //
-void Controller::handleEvents(){
-    for (auto evnt = sf::Event(); m_window->pollEvent(evnt);){
-        switch (evnt.type){
-        case sf::Event::Closed:
-            m_window->close(); break;
-        }
-    }
-}
-
-//=============================================================================
-//
-void Controller::keyBoardEvent(const sf::Event& evnt){
-    switch (evnt.key.code){
-    case sf::Keyboard::Escape:
-        m_window->close(); break;
-    }
-}
-//=============================================================================
-

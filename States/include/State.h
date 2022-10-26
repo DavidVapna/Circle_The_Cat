@@ -13,7 +13,7 @@ public:
 	virtual void draw() = 0;
 	virtual void update(const float& deltaTime) = 0;
 	virtual bool isEnd() const;
-
+	virtual void handleEvents() = 0;
 
 
 protected:
@@ -21,8 +21,8 @@ protected:
 	virtual void setBackground(const sf::Texture& texture);
 	virtual void setButtons() = 0;
 	virtual void keyBoardEvent(const sf::Event& evnt) = 0;
-
-
+	virtual void mouseEvent(const sf::Event& evnt) = 0;
+	virtual void updateButtons() = 0;
 protected:
 	sf::RenderWindow* m_window;
 	sf::Sprite m_backGround;

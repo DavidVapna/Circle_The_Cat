@@ -3,9 +3,10 @@
 #include "Tile.h"
 #include "Animation.h"
 //=============================================================================
-//
+//c-tor, takes in the starting position of the cat so it can later manipulate
+//if and when is needed.
 Cat::Cat(Tile& startingTile)
-    :m_faceRight(true), m_jumping(false){
+    :m_faceRight(true), m_jumping(false),m_jumpCounter(0){
     m_visitedTiles.push_back(&startingTile);
     auto& idle = Resources::instance().getTexture((int)Textures::IdleCat);
     auto& jump = Resources::instance().getTexture((int)Textures::JumpCat);
@@ -44,22 +45,22 @@ void Cat::update(float deltaTime){
         m_animation[(int)State::Jump]->update(deltaTime, m_faceRight);
         m_jump.setTextureRect(m_animation[(int)State::Jump]->uvRect);
         m_jump.move(m_frame);
+        m_jumpCounter--;
+        if(m_jumpCounter <= 0)
+            m_jumping = false;
     }
     else//idle animation
         m_animation[(int)State::idle]->update(deltaTime, m_faceRight);
         m_idle.setTextureRect(m_animation[(int)State::idle]->uvRect);
-
-
 }
 //=============================================================================
 //
 void Cat::draw(sf::RenderWindow& window) const{
-    if (m_jumping) {
-        //for (auto i = 0; i < JUMP_FRAMES; ++i) {
-            window.draw(m_jump);
-        //}
-    }
-    window.draw(m_idle);
+    if (m_jumping)
+        window.draw(m_jump);
+   
+    else
+        window.draw(m_idle);
 }
 //=============================================================================
 //
@@ -85,12 +86,21 @@ void Cat::catMove(Tile& destination){
     m_frame = sf::Vector2f((m_pos - currPos).x / JUMP_FRAMES, (m_pos - currPos).y / JUMP_FRAMES);
 
     m_visitedTiles.back()->catHere();
+    m_jumpCounter = JUMP_FRAMES;
+    m_jumping = true;
 }
 //=============================================================================
 //
-void Cat::jump(sf::RenderWindow& window){
-
-
+bool Cat::isJumping() const {
+    return m_jumping;
+}
+//=============================================================================
+//
+void Cat::ResetLevel() {
+    m_visitedTiles.front()->catLeft();
+    auto& temp = m_visitedTiles.back();
+    m_visitedTiles.clear();
+    m_visitedTiles.push_back(temp);
 }
 
 //=============================================================================
@@ -124,7 +134,8 @@ void Cat::newLevel(Tile& startingTile){
 //=============================================================================
 //
 bool Cat::findExit(std::vector<std::vector<Tile>>& gameBoard, std::list<sf::Vector2u>& escape) {
-
+    
+    escape.clear();
     bool found = false;
     auto catPos = m_visitedTiles.back()->getPos().first;
     gameBoard[catPos.x][catPos.y].setVisit();

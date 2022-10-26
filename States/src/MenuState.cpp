@@ -17,7 +17,7 @@ void MenuState::setTitle(){
     m_title.setFont(Resources::instance().getFont((int)Fonts::Classic));
     m_title.setCharacterSize(45);
     m_title.setString(TITLE_TEXT);
-    m_title.setPosition(TITLE_POSITION);
+    m_title.setPosition(MENU_TITLE_POS);
     m_title.setOrigin(m_title.getGlobalBounds().width / 2.f, m_title.getGlobalBounds().height / 2.f);
     m_title.setColor(sf::Color::Red);
 }
@@ -28,11 +28,11 @@ MenuState::~MenuState(){
 //=============================================================================
 void MenuState::setButtons(){
     m_buttons[(int)MenuButtons::Play_B] = std::make_unique<Button>
-        (PLAY_POS, BUTTONS_SIZE, PLAY_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
+        (PLAY_POS, MENU_BUTTON_SIZE, PLAY_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
     m_buttons[(int)MenuButtons::Help_B] = std::make_unique<Button>
-        (HELP_POS, BUTTONS_SIZE, HELP_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
+        (HELP_POS, MENU_BUTTON_SIZE, HELP_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
     m_buttons[(int)MenuButtons::Quit_B] = std::make_unique<Button>
-        (QUIT_POS, BUTTONS_SIZE, QUIT_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
+        (QUIT_POS, MENU_BUTTON_SIZE, QUIT_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
 }
 //=============================================================================
 void MenuState::draw(){
@@ -69,10 +69,19 @@ void MenuState::update(const float& deltaTime){
     }
 }
 //=============================================================================
-void MenuState::keyBoardEvent(const sf::Event& evnt){
-    switch (evnt.key.code){
-    case sf::Keyboard::Escape:
-        m_window->close(); break;
+void MenuState::keyBoardEvent(const sf::Event& evnt) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)){
+        m_window->close();
+        return;
+    }
+}
+//=============================================================================
+void MenuState::handleEvents() {
+    for (auto event = sf::Event(); m_window->pollEvent(event);) {
+        switch (event.type) {
+        case sf::Event::Closed:
+            m_window->close(); break;
+        }
     }
 }
 //=============================================================================

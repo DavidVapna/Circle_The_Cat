@@ -13,16 +13,14 @@ public:
 
 	void lostToCat();
 	void levelWin();
-	
 
+	virtual void mouseEvent(const sf::Event& evnt) override;
+	virtual void updateButtons() override;
+	void handleEvents() override;
 
 private:
-	void handleEvents();
 	virtual void keyBoardEvent(const sf::Event& evnt) override;
 	virtual void setButtons() override;
-	void restartLevel();
-
-
 
 	//
 	void setTexts();

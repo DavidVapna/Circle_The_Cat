@@ -29,9 +29,10 @@ constexpr auto CLICKS_TEXT = "CLICKS: ";
 constexpr auto LOSSING_TEXT = "THE CAT RAN AWAY!\n   TRY AGAIN? (Y/N)";
 constexpr auto WIN_TEXT = "YOU WIN! \nPRESS ANY KEY TO CONTINUE";
 //=============================================================================
-const sf::Vector2f TITLE_POSITION(GAME_WIDTH * 0.5, GAME_HEIGHT * 0.035);
+const sf::Vector2f GAME_TITLE_POS(GAME_WIDTH * 0.17, GAME_HEIGHT * 0.035);
+const sf::Vector2f MENU_TITLE_POS(GAME_WIDTH * 0.5, GAME_HEIGHT * 0.035);
 const sf::Vector2f CLICKS_POSITION(30, GAME_HEIGHT - 35);
-const sf::Vector2f UNDO_POSITION(GAME_WIDTH * 0.8, GAME_HEIGHT * 0.94);
+const sf::Vector2f UNDO_POSITION(GAME_WIDTH * 0.8, GAME_HEIGHT * 0.96);
 const sf::Vector2f LOSSING_POSITION(GAME_WIDTH * 0.20, GAME_HEIGHT * 0.45);
 const sf::Vector2f WIN_POSITION(GAME_WIDTH * 0.1, GAME_HEIGHT * 0.45);
 //=============================================================================
@@ -45,7 +46,7 @@ const sf::Vector2u DIFFICULTIES[3] = { EASY, MEDIUM, HARD };
 const sf::Vector2f LOOKING_RIGHT(TILE_SIZE.x * 0.25, TILE_SIZE.y * 0.85);
 const sf::Vector2f LOOKING_LEFT( -(TILE_SIZE.x * 0.5) , TILE_SIZE.y * 0.85);
 //=============================================================================
-constexpr auto JUMP_FRAMES = 170;
+constexpr auto JUMP_FRAMES = 30;
 constexpr auto DEATH_FRAMES= 200;
 //=============================================================================
 const sf::Vector2u CAT_START( 5,5 );
@@ -70,7 +71,8 @@ enum class States{Menu, Game};
 //=============================================================================
 
 //=============================================================================
-const sf::Vector2f BUTTONS_SIZE(200, 100);
+const sf::Vector2f MENU_BUTTON_SIZE(200, 100);
+const sf::Vector2f GAME_BUTTON_SIZE(85, 60);
 const sf::Vector2f PLAY_POS(MENU_SIZE.x / 2.f, MENU_SIZE.y* (2.f / 7.f));
 const sf::Vector2f HELP_POS(MENU_SIZE.x / 2.f, MENU_SIZE.y* (4.f / 7.f));
 const sf::Vector2f QUIT_POS(MENU_SIZE.x / 2.f, MENU_SIZE.y* (6.f / 7.f));
