@@ -28,8 +28,11 @@ public:
 	bool isJumping() const;
 
 private:
-	enum class State{idle, Jump};
-	void searchRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue, bool& found);
+	bool exitInBoard(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue,
+		std::vector<std::vector<Tile>>& gameBoard);
+	void setRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue,
+		std::list<sf::Vector2u>& escape);
+	bool randomMove(std::vector<std::vector<Tile>>& gameBoard, std::list<sf::Vector2u>& escape);
 
 private:
 	std::list<Tile*> m_visitedTiles;

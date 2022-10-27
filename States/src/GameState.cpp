@@ -5,15 +5,21 @@
 enum currMap{first, second, third};
 enum GameButtons{ Undo_B, Quit_B, Pause_B};
 //=============================================================================
-//
+//C-tor, points to the main window and states so it can update if needed
+//to remove itself or add another state on top of it (like pause, help etc..).
 GameState::GameState(sf::RenderWindow* window, std::stack<std::unique_ptr<State>>* states)
 	:State(window, states){
 	m_board = new Board(*window);
 	m_board->randomLava(DIFFICULTIES[(++m_difficulty) % 3]);
 	setBackground(Resources::instance().getTexture((int)Textures::GameBG));
-    Resources::instance().playMusic(Sounds::GameMusic);
-	setTexts();
 	setButtons();
+	setTexts();
+	music();
+}
+//=============================================================================
+//
+void GameState::music() {
+	Resources::instance().playMusic(Sounds::GameMusic);
 }
 //=============================================================================
 //
@@ -24,28 +30,26 @@ GameState::~GameState(){
 //
 void GameState::setButtons(){
 	m_buttons[(int)GameButtons::Undo_B] = std::make_unique<Button>
-		(UNDO_POSITION, GAME_BUTTON_SIZE, UNDO_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
+		(UNDO_POS, GAME_BUTTON_SIZE, UNDO_TEXT, sf::Color::Red, sf::Color::Yellow, sf::Color::Green);
 }
 //=============================================================================
 //
-void GameState::update(const float& deltaTime){
-	m_deltaTime = m_gameClock.restart().asSeconds();
-	updateMouse();
-	m_board->update(m_deltaTime);
-	updateButtons();
-	m_texts[(int)Texts::Counter].setString(CLICKS_TEXT + std::to_string(m_clicks));
-	
-	
+void GameState::update(const float& deltaTime) {
+	m_time += m_gameClock.restart();
+
 	if (m_board->didPlayerWin())
-		levelWin();
+		updateWin();
 	else if (m_board->didCatWin())
-		lostToCat();
+		updateLose();
+	else
+		gameUpdate(deltaTime);
+	m_texts[(int)Texts::Counter].setString(CLICKS_TEXT + std::to_string(m_clicks));
 }
 //=============================================================================
 //
-void GameState::updateButtons() {
+void GameState::updateButtons(const float& deltaTime) {
 	for (auto& button : m_buttons) {
-		button.second->update(m_mouseView);
+		button.second->update(m_mouseView, deltaTime);
 	}
 	if (m_buttons.find(Undo_B)->second->isClicked()){
 		if (m_board->undo()) {
@@ -92,7 +96,6 @@ void GameState::keyBoardEvent(const sf::Event& evnt) {
 //=============================================================================
 // 
 void GameState::mouseEvent(const sf::Event& evnt) {
-
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
 		if (m_board->mouseClicked(m_mouseView)) {
 			m_clicks++;
@@ -104,76 +107,64 @@ void GameState::mouseEvent(const sf::Event& evnt) {
 //background and the buttons.
 void GameState::draw(){
 	m_window->draw(m_backGround);
-
 	m_window->draw(m_texts[(int)Texts::Title]);
-	m_window->draw(m_texts[(int)Texts::Counter]);
-
-
+	m_board->draw();
+	for (auto i = 0; i < DEEFAULT_TEXTS; ++i) {
+		m_window->draw(m_texts[i]);
+	}
 	for (auto& button : m_buttons)
 		button.second->draw(*m_window);
-	
-	m_board->draw();
+
+	if (m_board->didPlayerWin())
+		m_window->draw(m_texts[(int)Texts::WIN]);
+	else if (m_board->didCatWin())
+		m_window->draw(m_texts[(int)Texts::Lost]);
 }
 //=============================================================================
-void GameState::levelWin(){
-	bool stop = false;
-	while (!stop){
-		m_window->clear();
-		draw();
-		m_window->draw(m_texts[(int)Texts::WIN]);
-		for (auto evnt = sf::Event(); m_window->pollEvent(evnt);){
-			if (evnt.type == sf::Event::Closed){
-				stop = true; m_window->close();
-			}
-			else if (evnt.type == sf::Event::KeyPressed){
-				stop = true;
-				m_board->nextLevel((++m_difficulty) % 3);
-				return;
-			}
-		}
-		m_window->display();
+// 
+void GameState::updateWin() {
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) {
+		m_board->loadLevel((++m_difficulty) % 3);
+		m_time = sf::Time().Zero;
 	}
 }
 //=============================================================================
 //
-void GameState::lostToCat() {
-	bool stop = false;
-	while (!stop) {
-		m_window->clear();
-		draw();
-		m_window->draw(m_texts[(int)Texts::Lossing]);
-		for (auto evnt = sf::Event(); m_window->pollEvent(evnt);) {
-			switch (evnt.type) {
-			case sf::Event::Closed:
-				stop = true; m_window->close(); break;
+void GameState::updateLose() {
+	m_board->update(0);
 
-			case sf::Event::KeyPressed: {
-				switch (evnt.key.code) {
-				case sf::Keyboard::Escape:
-					stop = true; m_window->close(); break;
-				case sf::Keyboard::N:
-					stop = true; m_window->close(); break;
-				case sf::Keyboard::Y:
-					stop = true; break;
-				}
-			}
-			}
-		}
-		m_window->display();
+	if (sf::Event::Closed) {
+		m_window->close();
 	}
-	
-	m_board->resetLevel();
-	m_clicks = 0;
-	
+	if (sf::Keyboard::isKeyPressed((sf::Keyboard::Escape)) ||
+		sf::Keyboard::isKeyPressed((sf::Keyboard::N))) {
+		this->m_end = true;
+		Resources::instance().stopMusic();
+	}
+	if (sf::Keyboard::isKeyPressed((sf::Keyboard::Y))) {
+		m_clicks = 0;
+		m_board->resetLevel();
+		m_time = sf::Time().Zero;
+	}
+}
+//=============================================================================
+//
+void GameState::gameUpdate(const float& deltaTime) {
+	updateMouse();
+	m_board->update(deltaTime);
+	updateButtons(deltaTime);
+	m_texts[(int)Texts::Time].setString(TIME_TEXT + std::to_string((int)m_time.asSeconds()));
 }
 //=============================================================================
 //
 void GameState::setTexts()
 {
 	setText(37, TITLE_TEXT, sf::Color::Black, GAME_TITLE_POS);
-	setText(25, CLICKS_TEXT, sf::Color::White, CLICKS_POSITION);
-	setText(35, LOSSING_TEXT, sf::Color::Cyan, LOSSING_POSITION);
-	setText(35, WIN_TEXT, sf::Color::Yellow, WIN_POSITION);
+	setText(25, CLICKS_TEXT, sf::Color::White, CLICKS_POS);
+	setText(25, TIME_TEXT, sf::Color::Yellow, TIME_POS);
+	setText(35, LOSSING_TEXT, sf::Color::Cyan, LOSSING_POS);
+	setText(35, WIN_TEXT, sf::Color::Yellow, WIN_POS);
+
 }
 //=============================================================================
 //

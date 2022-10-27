@@ -17,12 +17,15 @@ void Controller::run(){
 }
 //=============================================================================
 void Controller::update(){
+    m_deltaTime = m_clock.restart().asSeconds();
     if (!m_states.empty()){
-        m_states.top()->update(0);
+        m_states.top()->update(m_deltaTime);
         m_states.top()->handleEvents();
 
         if (m_states.top()->isEnd()){
             m_states.pop();
+            if(!m_states.empty())
+                m_states.top()->music();
         }
     }
     else

@@ -3,6 +3,8 @@
 #include "Tile.h"
 #include "Animation.h"
 //=============================================================================
+enum class State { idle, Jump };
+//=============================================================================
 //c-tor, takes in the starting position of the cat so it can later manipulate
 //if and when is needed.
 Cat::Cat(Tile& startingTile)
@@ -46,8 +48,10 @@ void Cat::update(float deltaTime){
         m_jump.setTextureRect(m_animation[(int)State::Jump]->uvRect);
         m_jump.move(m_frame);
         m_jumpCounter--;
-        if(m_jumpCounter <= 0)
+        if (m_jumpCounter <= 0) {
+            m_animation[(int)State::Jump]->resetRect();
             m_jumping = false;
+        }
     }
     else//idle animation
         m_animation[(int)State::idle]->update(deltaTime, m_faceRight);
@@ -134,45 +138,66 @@ void Cat::newLevel(Tile& startingTile){
 //=============================================================================
 //
 bool Cat::findExit(std::vector<std::vector<Tile>>& gameBoard, std::list<sf::Vector2u>& escape) {
-    
-    escape.clear();
-    bool found = false;
+    bool found;
     auto catPos = m_visitedTiles.back()->getPos().first;
     gameBoard[catPos.x][catPos.y].setVisit();
     std::vector<std::pair<sf::Vector2u, sf::Vector2u>> queue;
     queue.push_back(std::make_pair(catPos, sf::Vector2u{}));
 
-    for (int i = 0; i < queue.size() && !found; ++i) {
+    found = exitInBoard(queue, gameBoard);
+
+    for (auto& row : gameBoard)
+        for (auto& tile : row)
+            tile.resetVisit();
+    
+    if (found) {
+        setRoute(queue, escape);
+        return true;
+    }
+
+    else if (randomMove(gameBoard, escape))
+        return true;
+
+    return false;
+}
+//=============================================================================
+//
+bool Cat::exitInBoard(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue,
+    std::vector<std::vector<Tile>>& gameBoard) {
+    for (int i = 0; i < queue.size(); ++i) {
         for (auto adj : gameBoard[queue[i].first.x][queue[i].first.y].getAdjacents()) {
             if (gameBoard[adj.x][adj.y].isPassable() && !gameBoard[adj.x][adj.y].visited()) {
                 queue.push_back(std::make_pair(adj, queue[i].first));
                 if (gameBoard[adj.x][adj.y].isLossing()) {
-                    found = true; break;
+                    return true;
                 }
                 gameBoard[adj.x][adj.y].setVisit();
-            }
-        }
-    }
-
-    //if we found a valid escape then we save it in the queue so we can 
-    if (found) {
-        escape.push_back(queue.back().first);
-        for (auto i = --queue.end(); i != queue.begin(); --i) {
-            if (i->first == escape.back())
-                escape.push_back(i->second);
-        }
-        escape.pop_back();
-        return true;
-    }
-    else {
-        escape.clear();
-        for (auto adj : m_visitedTiles.back()->getAdjacents()) {
-            if (gameBoard[adj.x][adj.y].isPassable()) {
-                escape.push_back(adj);
-                return true;
             }
         }
     }
     return false;
 }
 //=============================================================================
+//if we found a valid escape then we save it in the queue so we can 
+void Cat::setRoute(std::vector<std::pair<sf::Vector2u, sf::Vector2u>>& queue,
+    std::list<sf::Vector2u>& escape) {
+    escape.clear();
+    escape.push_back(queue.back().first);
+    for (auto i = --queue.end(); i != queue.begin(); --i) {
+        if (i->first == escape.back())
+            escape.push_back(i->second);
+    }
+    escape.pop_back();
+}
+//=============================================================================
+//
+bool Cat::randomMove(std::vector<std::vector<Tile>>& gameBoard, std::list<sf::Vector2u>& escape) {
+    escape.clear();
+    for (auto adj : m_visitedTiles.back()->getAdjacents()) {
+        if (gameBoard[adj.x][adj.y].isPassable()) {
+            escape.push_back(adj);
+            return true;
+        }
+    }
+    return false;
+}

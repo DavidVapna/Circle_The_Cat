@@ -11,7 +11,7 @@ public:
 		    sf::Color idle, sf::Color hover, sf::Color clicked);
 	~Button() = default;
 	void draw(sf::RenderWindow& window);
-	void update(sf::Vector2f mousePos);
+	void update(sf::Vector2f mousePos, float deltaTime);
 	bool isClicked() const;
 
 private:
@@ -21,5 +21,7 @@ private:
 	sf::Color m_idle;
 	sf::Color m_hover;
 	sf::Color m_clicked;
+	float m_clickCD;
+	float m_clickCDMax;
 };
 //=============================================================================

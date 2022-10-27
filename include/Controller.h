@@ -21,5 +21,7 @@ private:
 	States m_currMod;
 	std::stack<std::unique_ptr<State>> m_states;
 	std::unique_ptr<sf::RenderWindow> m_window;
+	float m_deltaTime;
+	sf::Clock m_clock;
 };
 //=============================================================================

@@ -10,6 +10,11 @@ MenuState::MenuState(sf::RenderWindow* window, std::stack<std::unique_ptr<State>
     setBackground(Resources::instance().getTexture((int)Textures::MenuBG));
     setButtons();
     setTitle();
+    music();
+}
+//=============================================================================
+// 
+void MenuState::music() {
     Resources::instance().playMusic(Sounds::MenuMusic);
 }
 //=============================================================================
@@ -39,16 +44,44 @@ void MenuState::draw(){
     m_window->draw(m_backGround);
     m_window->draw(m_title);
 
-    for (auto& button : m_buttons){
+    for (auto& button : m_buttons)
         button.second->draw(*m_window);
-    }
 }
 //=============================================================================
 void MenuState::update(const float& deltaTime){
     updateMouse();
+    updateButtons(deltaTime);
+   
+}
+//=============================================================================
+void MenuState::keyBoardEvent(const sf::Event& evnt) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape) || 
+        sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)){
+        m_window->close();
+        this->m_end = true;
+    }
+}
+//=============================================================================
+void MenuState::handleEvents() {
+    for (auto event = sf::Event(); m_window->pollEvent(event);) {
+        switch (event.type) {
+        case sf::Event::Closed:
+            m_window->close(); break;
 
+        case sf::Event::KeyPressed:
+            keyBoardEvent(event); break;
+
+        case sf::Event::MouseButtonPressed:
+            mouseEvent(event); break;
+        
+        }
+    }
+}
+//=============================================================================
+// 
+void MenuState::updateButtons(const float& deltaTime) {
     for (auto& button : m_buttons) {
-        button.second->update(m_mouseView);
+        button.second->update(m_mouseView, deltaTime);
     }
     if (m_buttons.find(Quit_B)->second->isClicked()) {
         //maybeAddDialog.
@@ -58,30 +91,6 @@ void MenuState::update(const float& deltaTime){
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P)) {
         m_states->emplace(std::make_unique<GameState>(m_window, this->m_states));
         return;
-    }
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-        return;
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)){
-        //need to ask dialog.
-        this->m_end = true;
-    }
-}
-//=============================================================================
-void MenuState::keyBoardEvent(const sf::Event& evnt) {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)){
-        m_window->close();
-        return;
-    }
-}
-//=============================================================================
-void MenuState::handleEvents() {
-    for (auto event = sf::Event(); m_window->pollEvent(event);) {
-        switch (event.type) {
-        case sf::Event::Closed:
-            m_window->close(); break;
-        }
     }
 }
 //=============================================================================

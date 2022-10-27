@@ -4,7 +4,8 @@
 //=============================================================================
 Button::Button(sf::Vector2f pos, sf::Vector2f size, std::string text,
 				sf::Color idle, sf::Color hover, sf::Color clicked)
-	:m_idle(idle), m_hover(hover), m_clicked(clicked), m_state(Idle){
+	:m_idle(idle), m_hover(hover), m_clicked(clicked), m_state(Idle),
+	m_clickCD(0.2), m_clickCDMax(0.3){
 	m_button.setSize(size);
 	m_button.setOrigin(m_button.getGlobalBounds().width / 2.f, m_button.getGlobalBounds().height / 2.f);
 	m_button.setPosition(pos);
@@ -23,13 +24,15 @@ void Button::draw(sf::RenderWindow& window){
 	window.draw(m_text);
 }
 //=============================================================================
-void Button::update(sf::Vector2f mousePos){
+void Button::update(sf::Vector2f mousePos, float deltaTime){
 	m_state = Idle;
-
-	if (m_button.getGlobalBounds().contains(mousePos)){
+	m_clickCD += deltaTime;
+	if (m_button.getGlobalBounds().contains(mousePos)) {
 		m_state = Hover;
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && m_clickCD >= m_clickCDMax) {
 			m_state = clicked;
+			m_clickCD = 0.f;
+		}
 	}
 	switch (m_state){
 	case Idle:

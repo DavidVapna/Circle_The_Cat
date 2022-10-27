@@ -19,6 +19,12 @@ Animation::~Animation()
 {
 }
 //=============================================================================
+// 
+void Animation::resetRect() {
+	m_currImage.x = 0;
+	m_currImage.y = 0;
+}
+//=============================================================================
 //
 void Animation::update(float deltaTime, bool faceRight)
 {

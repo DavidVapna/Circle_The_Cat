@@ -27,14 +27,19 @@ constexpr auto TITLE_TEXT = "CIRCLE THE CAT-OUSAUR";
 constexpr auto UNDO_TEXT = "UNDO";
 constexpr auto CLICKS_TEXT = "CLICKS: ";
 constexpr auto LOSSING_TEXT = "THE CAT RAN AWAY!\n   TRY AGAIN? (Y/N)";
-constexpr auto WIN_TEXT = "YOU WIN! \nPRESS ANY KEY TO CONTINUE";
+constexpr auto WIN_TEXT = "YOU WIN! \nPRESS ENTER TO CONTINUE";
+
+constexpr auto TIME_TEXT = "TIME: ";
 //=============================================================================
 const sf::Vector2f GAME_TITLE_POS(GAME_WIDTH * 0.17, GAME_HEIGHT * 0.035);
 const sf::Vector2f MENU_TITLE_POS(GAME_WIDTH * 0.5, GAME_HEIGHT * 0.035);
-const sf::Vector2f CLICKS_POSITION(30, GAME_HEIGHT - 35);
-const sf::Vector2f UNDO_POSITION(GAME_WIDTH * 0.8, GAME_HEIGHT * 0.96);
-const sf::Vector2f LOSSING_POSITION(GAME_WIDTH * 0.20, GAME_HEIGHT * 0.45);
-const sf::Vector2f WIN_POSITION(GAME_WIDTH * 0.1, GAME_HEIGHT * 0.45);
+const sf::Vector2f CLICKS_POS(30, GAME_HEIGHT - 35);
+const sf::Vector2f UNDO_POS(GAME_WIDTH * 0.8, GAME_HEIGHT * 0.96);
+const sf::Vector2f LOSSING_POS(GAME_WIDTH * 0.20, GAME_HEIGHT * 0.45);
+const sf::Vector2f WIN_POS(GAME_WIDTH * 0.1, GAME_HEIGHT * 0.45);
+
+const sf::Vector2f TIME_POS(GAME_WIDTH * 0.05, GAME_HEIGHT * 0.01);
+
 //=============================================================================
 //*** FOR THE GAME IN GENERAL ***
 const sf::Vector2u EASY(11, 14);
@@ -46,7 +51,7 @@ const sf::Vector2u DIFFICULTIES[3] = { EASY, MEDIUM, HARD };
 const sf::Vector2f LOOKING_RIGHT(TILE_SIZE.x * 0.25, TILE_SIZE.y * 0.85);
 const sf::Vector2f LOOKING_LEFT( -(TILE_SIZE.x * 0.5) , TILE_SIZE.y * 0.85);
 //=============================================================================
-constexpr auto JUMP_FRAMES = 30;
+constexpr auto JUMP_FRAMES = 85;
 constexpr auto DEATH_FRAMES= 200;
 //=============================================================================
 const sf::Vector2u CAT_START( 5,5 );
@@ -60,9 +65,11 @@ constexpr auto JUMP_SWITCH( .1f );
 constexpr auto GENERAL = 0;
 //=============================================================================
 enum class Textures { Grass, Lava, GameBG, MenuBG, IdleCat, JumpCat, MaxTextures};
-enum class Texts{Title, Counter, Undo, Lossing, WIN, MaxTexts};
+enum class Texts{Title, Counter, Time, Lost, WIN, MaxTexts};
 enum class Sounds{Jump, MaxSounds, MenuMusic, GameMusic};
 enum class Fonts{Classic, MaxFonts};
+
+const int DEEFAULT_TEXTS = 3;
 //=============================================================================
 const int MUSIC_VOLUME = 25;
 const int EFFECTS_VOLUME = 10;

@@ -9,6 +9,7 @@ public:
 	Animation(const sf::Texture& image, const sf::Vector2u& imageCount, const float& switchTime);
 	~Animation();
 	void update(float deltaTime, bool faceRight);
+	void resetRect();
 
 private:
 	Animation() = default;

@@ -14,6 +14,7 @@ public:
 	virtual void update(const float& deltaTime) = 0;
 	virtual bool isEnd() const;
 	virtual void handleEvents() = 0;
+	virtual void music() = 0;
 
 
 protected:
@@ -22,7 +23,8 @@ protected:
 	virtual void setButtons() = 0;
 	virtual void keyBoardEvent(const sf::Event& evnt) = 0;
 	virtual void mouseEvent(const sf::Event& evnt) = 0;
-	virtual void updateButtons() = 0;
+	virtual void updateButtons(const float& deltaTime) = 0;
+
 protected:
 	sf::RenderWindow* m_window;
 	sf::Sprite m_backGround;
